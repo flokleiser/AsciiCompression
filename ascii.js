@@ -2,7 +2,17 @@ let img
 let asciiDiv
 let useColor = true
 let scaleFactor = 8
+let fontSize = 8
+
 const density = "Ñ@#W$9876543210?!abc;:+=-,._ "
+
+let asciiCharCount = 0;
+let estimatedTextSize = 0;
+let lastSavedSize = 0;
+
+let showOriginal = false;
+let dividerX;
+let draggingDivider = false
 
 let originalImg
 
@@ -17,7 +27,7 @@ function setup() {
     img = originalImg.get()
     img.loadPixels()
 
-    const fontSize = 8
+    // let fontSize = 8
     const lineHeight = 0.8
     const targetHeight = windowHeight * 0.95
 
@@ -40,6 +50,22 @@ function setup() {
     document.body.style.height = "100vh"
     document.body.style.background = "black"
 
+    controlsDiv = createDiv(`
+C: Toggle Color<br>
+↑/↓: Change Detail<br>
+`);
+    controlsDiv.style("position", "absolute");
+    controlsDiv.style("top", "10px");
+    controlsDiv.style("left", "10px");
+    controlsDiv.style("color", "white");
+    controlsDiv.style("font-family", "monospace");
+    controlsDiv.style("font-size", "14px");
+    controlsDiv.style("background", "rgba(0,0,0,0.8)");
+    controlsDiv.style("padding", "6px 10px");
+    controlsDiv.style("border-radius", "6px");
+    controlsDiv.style("user-select", "none");
+
+    // noLoop()
     convertImage()
 }
 
@@ -59,6 +85,9 @@ function keyPressed() {
         scaleFactor++
         convertImage()
         console.log("down")
+    }
+    if (key === 'f') {
+        fontSize += 1
     }
 }
 
