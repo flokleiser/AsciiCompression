@@ -8,7 +8,7 @@ let originalImg
 
 function preload() {
     // originalImg = loadImage("./assets/toni.jpg")
-    originalImg = loadImage("assets/toni.jpg")
+    originalImg = loadImage("toni.jpg")
 }
 
 function setup() {
