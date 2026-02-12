@@ -7,7 +7,8 @@ const density = "Ñ@#W$9876543210?!abc;:+=-,._ "
 let originalImg
 
 function preload() {
-    originalImg = loadImage("../assets/toni.jpg")
+    // originalImg = loadImage("./assets/toni.jpg")
+    originalImg = loadImage("assets/toni.jpg")
 }
 
 function setup() {
