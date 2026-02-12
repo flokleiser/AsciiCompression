@@ -1,7 +1,5 @@
 let img
 let asciiDiv
-let imageDiv
-let controlsDiv
 let useColor = true
 let scaleFactor = 8
 let fontSize = 8
@@ -12,12 +10,10 @@ let lastSavedSize = 0;
 let showOriginal = false;
 let originalImg
 let lineHeight = 0.8
-let dividerX = 0.5
-let isDragging = false
-let containerDiv
-let dividerLine
 
 function preload() {
+    // idk if this fixes it or not
+    // originalImg = loadImage("./toni.jpg")
     originalImg = loadImage("./toni.jpg", img => {
         img.canvas.getContext('2d', { willReadFrequently: true })
     })
@@ -25,47 +21,29 @@ function preload() {
 
 function setup() {
     noCanvas()
-    img = originalImg.get()
-    img.loadPixels()
-    resizeImageForFontSize()
 
-    containerDiv = createDiv()
-    containerDiv.style("position", "relative")
-    containerDiv.style("overflow", "hidden")
+    img = originalImg.get()
+
+    img.loadPixels()
+
+    resizeImageForFontSize()
 
     imageDiv = createDiv()
     imageDiv.style("position", "absolute")
-    imageDiv.style("top", "0")
-    imageDiv.style("left", "0")
     imageDiv.style("pointer-events", "none")
     let imgEl = createImg("./toni.jpg")
     imgEl.parent(imageDiv)
     imgEl.style("display", "block")
     imgEl.id("original-image")
-    imageDiv.parent(containerDiv)
+    updateImageDivPosition()
     imageDiv.hide()
+
 
     asciiDiv = createDiv()
     asciiDiv.style("font-family", "monospace")
     asciiDiv.style("white-space", "pre")
     asciiDiv.style("line-height", lineHeight + "em")
     asciiDiv.style("font-size", fontSize + "px")
-    asciiDiv.parent(containerDiv)
-
-    dividerLine = createDiv()
-    dividerLine.style("position", "absolute")
-    dividerLine.style("top", "0")
-    dividerLine.style("width", "4px")
-    dividerLine.style("height", "100%")
-    dividerLine.style("background", "white")
-    dividerLine.style("cursor", "ew-resize")
-    dividerLine.style("z-index", "1000")
-    dividerLine.parent(containerDiv)
-    dividerLine.hide()
-
-    dividerLine.mousePressed(() => {
-        isDragging = true
-    })
 
     document.body.style.margin = "0"
     document.body.style.display = "flex"
@@ -79,65 +57,44 @@ function setup() {
         ↑/↓: Change Detail<br>
         F/B: Font Size<br>
         O: Toggle Original<br>
-    `)
-    controlsDiv.style("position", "absolute")
-    controlsDiv.style("top", "10px")
-    controlsDiv.style("left", "10px")
-    controlsDiv.style("color", "white")
-    controlsDiv.style("font-family", "monospace")
-    controlsDiv.style("font-size", "14px")
-    controlsDiv.style("background", "rgba(0,0,0,0.8)")
-    controlsDiv.style("padding", "6px 10px")
-    controlsDiv.style("border-radius", "6px")
-    controlsDiv.style("user-select", "none")
-    controlsDiv.style("z-index", "2000")
+    `);
+
+    controlsDiv.style("position", "absolute");
+    controlsDiv.style("top", "10px");
+    controlsDiv.style("left", "10px");
+    controlsDiv.style("color", "white");
+    controlsDiv.style("font-family", "monospace");
+    controlsDiv.style("font-size", "14px");
+    controlsDiv.style("background", "rgba(0,0,0,0.8)");
+    controlsDiv.style("padding", "6px 10px");
+    controlsDiv.style("border-radius", "6px");
+    controlsDiv.style("user-select", "none");
 
     convertImage()
 }
 
-function mouseDragged() {
-    if (isDragging && showOriginal) {
-        const rect = containerDiv.elt.getBoundingClientRect()
-        dividerX = constrain((mouseX - rect.left) / rect.width, 0, 1)
-        updateDivider()
-    }
-}
-
-function mouseReleased() {
-    isDragging = false
-}
-
-function updateDivider() {
-    if (!showOriginal) return
-
-    const rect = containerDiv.elt.getBoundingClientRect()
-    const dividerPos = dividerX * rect.width
-
-    dividerLine.style("left", (dividerPos - 2) + "px")
-
-    imageDiv.style("clip-path", `inset(0 ${100 - dividerX * 100}% 0 0)`)
-    asciiDiv.style("clip-path", `inset(0 0 0 ${dividerX * 100}%)`)
-}
-
-function resizeImageForFontSize() {
-    img = originalImg.get()
-    img.loadPixels()
-    const targetHeight = windowHeight * 0.95
-    const renderedCharHeight = fontSize * lineHeight
-    const neededImageHeight = targetHeight * scaleFactor / renderedCharHeight
-    const ratio = neededImageHeight / img.height
-    img.resize(floor(img.width * ratio), floor(img.height * ratio))
-}
 
 function updateImageDivPosition() {
     if (!asciiDiv || !asciiDiv.elt) return
     const asciiRect = asciiDiv.elt.getBoundingClientRect()
+    imageDiv.position(asciiRect.left, asciiRect.top)
     const imgEl = document.getElementById("original-image")
     if (imgEl) {
         imgEl.style.width = asciiRect.width + "px"
         imgEl.style.height = asciiRect.height + "px"
     }
-    updateDivider()
+}
+
+
+function resizeImageForFontSize() {
+    img = originalImg.get()
+    img.loadPixels()
+
+    const targetHeight = windowHeight * 0.95
+    const renderedCharHeight = fontSize * lineHeight
+    const neededImageHeight = targetHeight * scaleFactor / renderedCharHeight
+    const ratio = neededImageHeight / img.height
+    img.resize(floor(img.width * ratio), floor(img.height * ratio))
 }
 
 function keyPressed() {
@@ -168,15 +125,9 @@ function keyPressed() {
     if (key === 'o' || key === 'O') {
         showOriginal = !showOriginal
         if (showOriginal) {
-            updateImageDivPosition()
             imageDiv.show()
-            dividerLine.show()
-            dividerX = 0.5
-            updateDivider()
         } else {
             imageDiv.hide()
-            dividerLine.hide()
-            asciiDiv.style("clip-path", "none")
         }
     }
 }
@@ -187,6 +138,7 @@ function windowResized() {
 
 function convertImage() {
     const parts = []
+
     for (let y = 0; y < img.height; y += scaleFactor) {
         for (let x = 0; x < img.width; x += scaleFactor) {
             const i = (y * img.width + x) * 4
@@ -196,6 +148,7 @@ function convertImage() {
             const brightness = (r + g + b) / 3
             const charIndex = floor(map(brightness, 0, 255, density.length - 1, 0))
             const char = density.charAt(charIndex)
+
             if (useColor) {
                 parts.push(`<span style="color:rgb(${r},${g},${b})">${char}</span>`)
             } else {
@@ -204,6 +157,7 @@ function convertImage() {
         }
         parts.push("\n")
     }
+
     asciiDiv.html(parts.join(''))
     setTimeout(updateImageDivPosition, 10)
 }
