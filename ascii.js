@@ -12,21 +12,32 @@ let dividerX;
 let draggingDivider = false
 let originalImg
 let lineHeight = 0.8
+let imageLoaded = false
 
 function preload() {
-    // idk if this fixes it or not
-    // originalImg = loadImage("./toni.jpg")
-    originalImg = loadImage("./toni.jpg", img => {
-        img.canvas.getContext('2d', { willReadFrequently: true })
-    })
+
+    //prevent dumb thing not working on gh pages
+
+    originalImg = loadImage("./toni.jpg",
+        img => {
+            if (img.canvas) {
+                img.canvas.getContext('2d', { willReadFrequently: true })
+            }
+            imageLoaded = true
+        },
+        err => {
+            console.error("Error loading image:", err)
+        }
+    )
 }
 
 function setup() {
     noCanvas()
 
-    img = originalImg.get()
-
-    img.loadPixels()
+    if (!imageLoaded || !originalImg) {
+        console.error("Image not loaded yet")
+        return
+    }
 
     resizeImageForFontSize()
 
@@ -46,7 +57,7 @@ function setup() {
     controlsDiv = createDiv(`
 C: Toggle Color<br>
 ↑/↓: Change Detail<br>
-+/-: Font Size<br>
+f/b: Font Size<br>
 `);
     controlsDiv.style("position", "absolute");
     controlsDiv.style("top", "10px");
@@ -63,27 +74,40 @@ C: Toggle Color<br>
 }
 
 function resizeImageForFontSize() {
+    if (!originalImg || !imageLoaded) {
+        console.error("Original image not available")
+        return
+    }
+
     img = originalImg.get()
-    img.loadPixels()
+
+    if (img.canvas) {
+        img.canvas.getContext('2d', { willReadFrequently: true })
+    }
 
     const targetHeight = windowHeight * 0.95
     const renderedCharHeight = fontSize * lineHeight
     const neededImageHeight = targetHeight * scaleFactor / renderedCharHeight
     const ratio = neededImageHeight / img.height
     img.resize(floor(img.width * ratio), floor(img.height * ratio))
+    img.loadPixels()
 }
 
 function keyPressed() {
+    if (!imageLoaded) return
+
     if (key === "c" || key === "C") {
         useColor = !useColor
         convertImage()
     }
     if (keyCode === UP_ARROW) {
         scaleFactor = max(2, scaleFactor - 1)
+        resizeImageForFontSize()
         convertImage()
     }
     if (keyCode === DOWN_ARROW) {
         scaleFactor++
+        resizeImageForFontSize()
         convertImage()
     }
     if (key === 'f' || key === 'F') {
@@ -101,10 +125,17 @@ function keyPressed() {
 }
 
 function windowResized() {
-    setup()
+    if (imageLoaded) {
+        setup()
+    }
 }
 
 function convertImage() {
+    if (!img || !img.pixels) {
+        console.error("Image pixels not available")
+        return
+    }
+
     const parts = []
 
     for (let y = 0; y < img.height; y += scaleFactor) {
@@ -128,4 +159,132 @@ function convertImage() {
 
     asciiDiv.html(parts.join(''))
 }
+// let img
+// let asciiDiv
+// let useColor = true
+// let scaleFactor = 8
+// let fontSize = 8
+// const density = "Ñ@#W$9876543210?!abc;:+=-,._ "
+// let asciiCharCount = 0;
+// let estimatedTextSize = 0;
+// let lastSavedSize = 0;
+// let showOriginal = false;
+// let originalImg
+// let lineHeight = 0.8
+
+// function preload() {
+//     // idk if this fixes it or not
+//     // originalImg = loadImage("./toni.jpg")
+//     originalImg = loadImage("./toni.jpg", img => {
+//         img.canvas.getContext('2d', { willReadFrequently: true })
+//     })
+// }
+
+// function setup() {
+//     noCanvas()
+
+//     img = originalImg.get()
+
+//     img.loadPixels()
+
+//     resizeImageForFontSize()
+
+//     asciiDiv = createDiv()
+//     asciiDiv.style("font-family", "monospace")
+//     asciiDiv.style("white-space", "pre")
+//     asciiDiv.style("line-height", lineHeight + "em")
+//     asciiDiv.style("font-size", fontSize + "px")
+
+//     document.body.style.margin = "0"
+//     document.body.style.display = "flex"
+//     document.body.style.justifyContent = "center"
+//     document.body.style.alignItems = "center"
+//     document.body.style.height = "100vh"
+//     document.body.style.background = "black"
+
+//     controlsDiv = createDiv(`
+// C: Toggle Color<br>
+// ↑/↓: Change Detail<br>
+// +/-: Font Size<br>
+// `);
+//     controlsDiv.style("position", "absolute");
+//     controlsDiv.style("top", "10px");
+//     controlsDiv.style("left", "10px");
+//     controlsDiv.style("color", "white");
+//     controlsDiv.style("font-family", "monospace");
+//     controlsDiv.style("font-size", "14px");
+//     controlsDiv.style("background", "rgba(0,0,0,0.8)");
+//     controlsDiv.style("padding", "6px 10px");
+//     controlsDiv.style("border-radius", "6px");
+//     controlsDiv.style("user-select", "none");
+
+//     convertImage()
+// }
+
+// function resizeImageForFontSize() {
+//     img = originalImg.get()
+//     img.loadPixels()
+
+//     const targetHeight = windowHeight * 0.95
+//     const renderedCharHeight = fontSize * lineHeight
+//     const neededImageHeight = targetHeight * scaleFactor / renderedCharHeight
+//     const ratio = neededImageHeight / img.height
+//     img.resize(floor(img.width * ratio), floor(img.height * ratio))
+// }
+
+// function keyPressed() {
+//     if (key === "c" || key === "C") {
+//         useColor = !useColor
+//         convertImage()
+//     }
+//     if (keyCode === UP_ARROW) {
+//         scaleFactor = max(2, scaleFactor - 1)
+//         convertImage()
+//     }
+//     if (keyCode === DOWN_ARROW) {
+//         scaleFactor++
+//         convertImage()
+//     }
+//     if (key === 'f' || key === 'F') {
+//         fontSize = min(fontSize + 1, 30)
+//         asciiDiv.style("font-size", fontSize + "px")
+//         resizeImageForFontSize()
+//         convertImage()
+//     }
+//     if (key === 'b' || key === 'B') {
+//         fontSize = max(fontSize - 1, 4)
+//         asciiDiv.style("font-size", fontSize + "px")
+//         resizeImageForFontSize()
+//         convertImage()
+//     }
+// }
+
+// function windowResized() {
+//     setup()
+// }
+
+// function convertImage() {
+//     const parts = []
+
+//     for (let y = 0; y < img.height; y += scaleFactor) {
+//         for (let x = 0; x < img.width; x += scaleFactor) {
+//             const i = (y * img.width + x) * 4
+//             const r = img.pixels[i]
+//             const g = img.pixels[i + 1]
+//             const b = img.pixels[i + 2]
+//             const brightness = (r + g + b) / 3
+//             const charIndex = floor(map(brightness, 0, 255, density.length - 1, 0))
+//             const char = density.charAt(charIndex)
+
+//             if (useColor) {
+//                 parts.push(`<span style="color:rgb(${r},${g},${b})">${char}</span>`)
+//             } else {
+//                 parts.push(char)
+//             }
+//         }
+//         parts.push("\n")
+//     }
+
+//     asciiDiv.html(parts.join(''))
+// }
 
