@@ -3,39 +3,32 @@ let asciiDiv
 let useColor = true
 let scaleFactor = 8
 let fontSize = 8
-
 const density = "Ñ@#W$9876543210?!abc;:+=-,._ "
-
 let asciiCharCount = 0;
 let estimatedTextSize = 0;
 let lastSavedSize = 0;
-
 let showOriginal = false;
 let dividerX;
 let draggingDivider = false
-
 let originalImg
+let lineHeight = 0.8
 
 function preload() {
-    // originalImg = loadImage("./assets/toni.jpg")
-    originalImg = loadImage("./toni.jpg")
+    // idk if this fixes it or not
+    // originalImg = loadImage("./toni.jpg")
+    originalImg = loadImage("./toni.jpg", img => {
+        img.canvas.getContext('2d', { willReadFrequently: true })
+    })
 }
 
 function setup() {
     noCanvas()
 
     img = originalImg.get()
+
     img.loadPixels()
 
-    // let fontSize = 8
-    const lineHeight = 0.8
-    const targetHeight = windowHeight * 0.95
-
-    const renderedCharHeight = fontSize * lineHeight
-    const neededImageHeight = targetHeight * scaleFactor / renderedCharHeight
-
-    const ratio = neededImageHeight / img.height
-    img.resize(floor(img.width * ratio), floor(img.height * ratio))
+    resizeImageForFontSize()
 
     asciiDiv = createDiv()
     asciiDiv.style("font-family", "monospace")
@@ -53,6 +46,7 @@ function setup() {
     controlsDiv = createDiv(`
 C: Toggle Color<br>
 ↑/↓: Change Detail<br>
++/-: Font Size<br>
 `);
     controlsDiv.style("position", "absolute");
     controlsDiv.style("top", "10px");
@@ -65,10 +59,19 @@ C: Toggle Color<br>
     controlsDiv.style("border-radius", "6px");
     controlsDiv.style("user-select", "none");
 
-    // noLoop()
     convertImage()
 }
 
+function resizeImageForFontSize() {
+    img = originalImg.get()
+    img.loadPixels()
+
+    const targetHeight = windowHeight * 0.95
+    const renderedCharHeight = fontSize * lineHeight
+    const neededImageHeight = targetHeight * scaleFactor / renderedCharHeight
+    const ratio = neededImageHeight / img.height
+    img.resize(floor(img.width * ratio), floor(img.height * ratio))
+}
 
 function keyPressed() {
     if (key === "c" || key === "C") {
@@ -78,16 +81,22 @@ function keyPressed() {
     if (keyCode === UP_ARROW) {
         scaleFactor = max(2, scaleFactor - 1)
         convertImage()
-        console.log("up")
     }
-
     if (keyCode === DOWN_ARROW) {
         scaleFactor++
         convertImage()
-        console.log("down")
     }
-    if (key === 'f') {
-        fontSize += 1
+    if (key === 'f' || key === 'F') {
+        fontSize = min(fontSize + 1, 30)
+        asciiDiv.style("font-size", fontSize + "px")
+        resizeImageForFontSize()
+        convertImage()
+    }
+    if (key === 'b' || key === 'B') {
+        fontSize = max(fontSize - 1, 4)
+        asciiDiv.style("font-size", fontSize + "px")
+        resizeImageForFontSize()
+        convertImage()
     }
 }
 
@@ -96,8 +105,7 @@ function windowResized() {
 }
 
 function convertImage() {
-    // img.loadPixels()
-    let asciiStr = ""
+    const parts = []
 
     for (let y = 0; y < img.height; y += scaleFactor) {
         for (let x = 0; x < img.width; x += scaleFactor) {
@@ -105,20 +113,19 @@ function convertImage() {
             const r = img.pixels[i]
             const g = img.pixels[i + 1]
             const b = img.pixels[i + 2]
-
             const brightness = (r + g + b) / 3
             const charIndex = floor(map(brightness, 0, 255, density.length - 1, 0))
             const char = density.charAt(charIndex)
 
             if (useColor) {
-                asciiStr += `<span style="color: rgb(${r},${g},${b})">${char}</span>`
+                parts.push(`<span style="color:rgb(${r},${g},${b})">${char}</span>`)
             } else {
-                asciiStr += char
+                parts.push(char)
             }
         }
-        asciiStr += "\n"
+        parts.push("\n")
     }
 
-    asciiDiv.html(asciiStr)
+    asciiDiv.html(parts.join(''))
 }
 
