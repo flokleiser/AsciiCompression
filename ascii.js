@@ -28,6 +28,17 @@ function setup() {
 
     resizeImageForFontSize()
 
+    imageDiv = createDiv()
+    imageDiv.style("position", "absolute")
+    imageDiv.style("pointer-events", "none")
+    let imgEl = createImg("./toni.jpg")
+    imgEl.parent(imageDiv)
+    imgEl.style("display", "block")
+    imgEl.id("original-image")
+    updateImageDivPosition()
+    imageDiv.hide()
+
+
     asciiDiv = createDiv()
     asciiDiv.style("font-family", "monospace")
     asciiDiv.style("white-space", "pre")
@@ -42,10 +53,12 @@ function setup() {
     document.body.style.background = "black"
 
     controlsDiv = createDiv(`
-C: Toggle Color<br>
-↑/↓: Change Detail<br>
-+/-: Font Size<br>
-`);
+        C: Toggle Color<br>
+        ↑/↓: Change Detail<br>
+        F/B: Font Size<br>
+        O: Toggle Original<br>
+    `);
+
     controlsDiv.style("position", "absolute");
     controlsDiv.style("top", "10px");
     controlsDiv.style("left", "10px");
@@ -59,6 +72,19 @@ C: Toggle Color<br>
 
     convertImage()
 }
+
+
+function updateImageDivPosition() {
+    if (!asciiDiv || !asciiDiv.elt) return
+    const asciiRect = asciiDiv.elt.getBoundingClientRect()
+    imageDiv.position(asciiRect.left, asciiRect.top)
+    const imgEl = document.getElementById("original-image")
+    if (imgEl) {
+        imgEl.style.width = asciiRect.width + "px"
+        imgEl.style.height = asciiRect.height + "px"
+    }
+}
+
 
 function resizeImageForFontSize() {
     img = originalImg.get()
@@ -96,6 +122,14 @@ function keyPressed() {
         resizeImageForFontSize()
         convertImage()
     }
+    if (key === 'o' || key === 'O') {
+        showOriginal = !showOriginal
+        if (showOriginal) {
+            imageDiv.show()
+        } else {
+            imageDiv.hide()
+        }
+    }
 }
 
 function windowResized() {
@@ -125,5 +159,6 @@ function convertImage() {
     }
 
     asciiDiv.html(parts.join(''))
+    setTimeout(updateImageDivPosition, 10)
 }
 
